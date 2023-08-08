@@ -12,6 +12,7 @@ import statsapi
 import requests
 import numpy as np
 import sqlalchemy
+from constants import API_KEY, sql_hostname, database_name
 import mysql.connector
 
 Short_Long_Names = pd.read_csv("short_long_mlb_names.csv")
@@ -27,7 +28,6 @@ def name_converter(short_name):
     
         return long_name.iloc[0]
 
-API_KEY = "your prop-odds.com api key"
 
 # =============================================================================
 # Start 
@@ -36,6 +36,7 @@ API_KEY = "your prop-odds.com api key"
 # First, we call the schedule API to get a list of all games played from the start of the season, up to yesterday.
 
 begin_date = "2023-03-30"
+#begin_date = "2023-08-06"
 ending_date = (datetime.today() - timedelta(days = 1)).strftime("%Y-%m-%d")
 
 Schedule = statsapi.schedule(start_date = begin_date, end_date = ending_date)
@@ -190,20 +191,21 @@ Featured_Spread_DataFrame = spread_dataframe[["team_1", "team_1_spread_odds", "t
 
 Featured_Spread_DataFrame = Featured_Spread_DataFrame[(abs(Featured_Spread_DataFrame["team_1_spread_odds"]) < 200) & (abs(Featured_Spread_DataFrame["team_2_spread_odds"]) < 200)]
 Featured_Spread_DataFrame = Featured_Spread_DataFrame[Featured_Spread_DataFrame["team_1"] != Featured_Spread_DataFrame["team_2"]]
-Featured_Spread_DataFrame.index = pd.to_datetime(Featured_Spread_DataFrame.index).tz_convert("America/Chicago")
+#Featured_Spread_DataFrame.index = pd.to_datetime(Featured_Spread_DataFrame.index).tz_convert("America/Chicago")
+Featured_Spread_DataFrame.index = pd.to_datetime(Featured_Spread_DataFrame.index).tz_localize(tz=None)
 
 # We initialize our sqlalchemy engine, then submit the data to the database
 
-initial_engine = sqlalchemy.create_engine('mysql+mysqlconnector://username:password@database-host-name:3306')
+initial_engine = sqlalchemy.create_engine(sql_hostname)
 
 with initial_engine.connect() as conn:
-    result = conn.execute(sqlalchemy.text('CREATE DATABASE desired_database_name'))
+    result = conn.execute(sqlalchemy.text(f'CREATE DATABASE {database_name}'))
 
-engine = sqlalchemy.create_engine('mysql+mysqlconnector://username:password@database-host-name:3306/database-name')
+engine = sqlalchemy.create_engine(f'{sql_hostname}/{database_name}')
 
 Featured_Spread_DataFrame.to_sql("baseball_spread", con = engine, if_exists = "append")
 
 # If you make a mistake, or wish to re-build te dataset, you can drop the table and start over
 
-with engine.connect() as conn:
-    result = conn.execute(sqlalchemy.text('DROP TABLE baseball_spread'))
+# with engine.connect() as conn:
+#     result = conn.execute(sqlalchemy.text('DROP TABLE baseball_spread'))

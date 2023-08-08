@@ -12,6 +12,7 @@ import statsapi
 import requests
 import numpy as np
 import sqlalchemy
+from constants import API_KEY, database_name, sql_hostname
 import mysql.connector
 
 Short_Long_Names = pd.read_csv("short_long_mlb_names.csv")
@@ -27,7 +28,6 @@ def name_converter(short_name):
     
         return long_name.iloc[0]
 
-API_KEY = "your prop-odds.com api key"
 
 # =============================================================================
 # Start 
@@ -167,7 +167,8 @@ Featured_Spread_DataFrame = Featured_Merged_DataFrame[["team_1", "team_1_spread_
 
 Featured_Spread_DataFrame = Featured_Spread_DataFrame[(abs(Featured_Spread_DataFrame["team_1_spread_odds"]) < 200) & (abs(Featured_Spread_DataFrame["team_2_spread_odds"]) < 200)]
 Featured_Spread_DataFrame = Featured_Spread_DataFrame[Featured_Spread_DataFrame["team_1"] != Featured_Spread_DataFrame["team_2"]]
-Featured_Spread_DataFrame.index = pd.to_datetime(Featured_Spread_DataFrame.index).tz_convert("America/Chicago")
+#Featured_Spread_DataFrame.index = pd.to_datetime(Featured_Spread_DataFrame.index).tz_convert("America/Chicago")
+Featured_Spread_DataFrame.index = pd.to_datetime(Featured_Spread_DataFrame.index).tz_localize(tz=None)
 
 # =============================================================================
 # End
@@ -175,11 +176,11 @@ Featured_Spread_DataFrame.index = pd.to_datetime(Featured_Spread_DataFrame.index
 
 # We initialize our sqlalchemy engine, then submit the data to the database
 
-engine = sqlalchemy.create_engine('mysql+mysqlconnector://username:password@database-host-name:3306/database-name')
+engine = sqlalchemy.create_engine(f'{sql_hostname}/{database_name}')
 
 # The daily production dataset should be dropped each day, sa
 
 with engine.connect() as conn:
-    result = conn.execute(sqlalchemy.text('DROP TABLE baseball_spread_production'))
+    result = conn.execute(sqlalchemy.text('DROP TABLE IF EXISTS baseball_spread_production'))
 
 Featured_Spread_DataFrame.to_sql("baseball_spread_production", con = engine, if_exists = "append")
