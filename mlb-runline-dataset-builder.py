@@ -14,20 +14,7 @@ import numpy as np
 import sqlalchemy
 from constants import API_KEY, sql_hostname, database_name
 import mysql.connector
-
-Short_Long_Names = pd.read_csv("short_long_mlb_names.csv")
-
-def name_converter(short_name):
-    
-    long_name = Short_Long_Names[Short_Long_Names["short_name"] == short_name]["long_name"]
-    
-    if len(long_name) < 1 :
-        
-        return np.nan
-    else:
-    
-        return long_name.iloc[0]
-
+from helper_functions import name_converter
 
 # =============================================================================
 # Start 
@@ -35,7 +22,7 @@ def name_converter(short_name):
 
 # First, we call the schedule API to get a list of all games played from the start of the season, up to yesterday.
 
-begin_date = "2023-03-30"
+begin_date = "2023-08-11"
 #begin_date = "2023-08-06"
 ending_date = (datetime.today() - timedelta(days = 1)).strftime("%Y-%m-%d")
 
@@ -198,12 +185,12 @@ Featured_Spread_DataFrame.index = pd.to_datetime(Featured_Spread_DataFrame.index
 
 initial_engine = sqlalchemy.create_engine(sql_hostname)
 
-with initial_engine.connect() as conn:
-    result = conn.execute(sqlalchemy.text(f'CREATE DATABASE {database_name}'))
+# with initial_engine.connect() as conn:
+#     result = conn.execute(sqlalchemy.text(f'CREATE DATABASE {database_name}'))
 
 engine = sqlalchemy.create_engine(f'{sql_hostname}/{database_name}')
 
-Featured_Spread_DataFrame.to_sql("baseball_spread", con = engine, if_exists = "append")
+#Featured_Spread_DataFrame.to_sql("baseball_spread", con = engine, if_exists = "append")
 
 # If you make a mistake, or wish to re-build te dataset, you can drop the table and start over
 

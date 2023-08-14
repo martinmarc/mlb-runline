@@ -14,19 +14,7 @@ import numpy as np
 import sqlalchemy
 from constants import API_KEY, database_name, sql_hostname
 import mysql.connector
-
-Short_Long_Names = pd.read_csv("short_long_mlb_names.csv")
-
-def name_converter(short_name):
-    
-    long_name = Short_Long_Names[Short_Long_Names["short_name"] == short_name]["long_name"]
-    
-    if len(long_name) < 1 :
-        
-        return np.nan
-    else:
-    
-        return long_name.iloc[0]
+from helper_functions import name_converter
 
 
 # =============================================================================
